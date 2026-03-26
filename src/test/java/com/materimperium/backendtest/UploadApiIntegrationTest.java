@@ -20,6 +20,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.ResultActions;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -53,11 +54,7 @@ class UploadApiIntegrationTest extends IntegrationTestSupport {
         JsonNode uploadJson = objectMapper.readTree(uploadResult.getResponse().getContentAsString());
         String id = uploadJson.get("id").asText();
 
-        mockMvc.perform(get("/api/uploads/{id}/status", id)
-                        .header("Authorization", "Bearer token-envio"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(id))
-                .andExpect(jsonPath("$.status").value("FINALIZADO_COM_SUCESSO"));
+        aguardarStatusFinal(id);
 
         mockMvc.perform(get("/api/uploads/{id}/resultado", id)
                         .header("Authorization", "Bearer token-consulta"))
@@ -73,5 +70,25 @@ class UploadApiIntegrationTest extends IntegrationTestSupport {
                 .andExpect(jsonPath("$.resumo[3].total").value(2))
                 .andExpect(jsonPath("$.resumo[4].registro").value("C190"))
                 .andExpect(jsonPath("$.resumo[4].total").value(1));
+    }
+
+    private void aguardarStatusFinal(String id) throws Exception {
+        for (int tentativa = 0; tentativa < 20; tentativa++) {
+            ResultActions resultado = mockMvc.perform(get("/api/uploads/{id}/status", id)
+                    .header("Authorization", "Bearer token-envio"));
+
+            String payload = resultado.andReturn().getResponse().getContentAsString();
+            JsonNode statusJson = objectMapper.readTree(payload);
+            if ("FINALIZADO_COM_SUCESSO".equals(statusJson.get("status").asText())) {
+                resultado.andExpect(status().isOk())
+                        .andExpect(jsonPath("$.id").value(id))
+                        .andExpect(jsonPath("$.status").value("FINALIZADO_COM_SUCESSO"));
+                return;
+            }
+
+            Thread.sleep(50);
+        }
+
+        throw new AssertionError("Processamento nao finalizou com sucesso dentro do tempo esperado");
     }
 }
