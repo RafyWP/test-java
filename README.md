@@ -5,13 +5,13 @@ API em Java 21 com Spring Boot para upload, processamento assíncrono e consulta
 ## Requisitos
 
 - Docker
-- O script [`mvn-dev-docker`](/saas/test-java/mvn-dev-docker) incluido no repositorio
+- O script [`mvn-dev-docker`](mvn-dev-docker) incluido no repositorio
 
 ## Ambientes
 
 - `docker-compose.dev.yml`: sobe apenas o PostgreSQL para desenvolvimento
 - `docker-compose.prod.yml`: sobe PostgreSQL + API empacotada em Docker
-- [`mvn-dev-docker`](/saas/test-java/mvn-dev-docker): wrapper para rodar Maven em container no fluxo de desenvolvimento
+- [`mvn-dev-docker`](mvn-dev-docker): wrapper para rodar Maven em container no fluxo de desenvolvimento
 
 ## Desenvolvimento
 
@@ -76,8 +76,8 @@ POSTGRES_PORT=5434 APP_PORT=8083 docker compose -f docker-compose.prod.yml up --
 
 Arquivos disponiveis:
 
-- collection: [postman/Test-RafyWP.postman_collection.json](/saas/test-java/postman/Test-RafyWP.postman_collection.json)
-- environment: [postman/Test-RafyWP-Local.postman_environment.json](/saas/test-java/postman/Test-RafyWP-Local.postman_environment.json)
+- collection: [postman/Test-RafyWP.postman_collection.json](postman/Test-RafyWP.postman_collection.json)
+- environment: [postman/Test-RafyWP-Local.postman_environment.json](postman/Test-RafyWP-Local.postman_environment.json)
 
 Como usar:
 
