@@ -1,0 +1,298 @@
+{
+  "info": {
+    "_postman_id": "7bf2d5d3-8e29-4a8f-9d30-6bdb6c3d7a11",
+    "name": "Test RafyWP - MaterImperium Java Backend API",
+    "description": "Collection para testes manuais da API do desafio MaterImperium.\n\nComo usar:\n1. Ajuste a variavel `baseUrl` se a API nao estiver em http://localhost:8082.\n2. No request de upload, selecione um arquivo texto no campo `file`.\n3. Execute o upload com um token de ENVIO.\n4. O teste do upload salva automaticamente o `processingId` na collection.\n5. Use os requests de status e resultado para consultar o mesmo processamento.\n\nVariaveis disponiveis:\n- `baseUrl`: endereco base da API\n- `tokenEnvio`: token com role ENVIO\n- `tokenConsulta`: token com role CONSULTA\n- `tokenFull`: token com roles ENVIO e CONSULTA\n- `processingId`: identificador do ultimo upload executado com sucesso",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8082",
+      "type": "string"
+    },
+    {
+      "key": "tokenEnvio",
+      "value": "token-envio",
+      "type": "string"
+    },
+    {
+      "key": "tokenConsulta",
+      "value": "token-consulta",
+      "type": "string"
+    },
+    {
+      "key": "tokenFull",
+      "value": "token-full",
+      "type": "string"
+    },
+    {
+      "key": "processingId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Upload",
+      "description": "Endpoints de envio do arquivo.\n\nRegra de acesso: requer role ENVIO.\n\nObservacoes:\n- O arquivo precisa ter primeira linha iniciando com `|0000|017|` ou `|0000|006|`.\n- A segunda linha deve ser exatamente `|0001|0|`.\n- Quando o upload funciona, a collection grava automaticamente o `processingId` para uso nos proximos requests.",
+      "item": [
+        {
+          "name": "Upload valido",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenEnvio}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/uploads",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "uploads"
+              ]
+            },
+            "description": "Envia um arquivo valido para processamento em background.\n\nResposta esperada:\n- HTTP 202\n- body com `{ \"id\": \"...\" }`"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 202', function () {",
+                  "  pm.response.to.have.status(202);",
+                  "});",
+                  "",
+                  "var json = pm.response.json();",
+                  "pm.test('Response contains id', function () {",
+                  "  pm.expect(json.id).to.be.a('string');",
+                  "  pm.expect(json.id).to.not.be.empty;",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set('processingId', json.id);"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Upload sem arquivo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenEnvio}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/uploads",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "uploads"
+              ]
+            },
+            "description": "Cenario de erro para validar a resposta quando nenhum arquivo e enviado.\n\nResposta esperada:\n- HTTP 400\n- body com `{ \"erro\": \"Arquivo nao enviado\" }`"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. Consulta de status",
+      "description": "Endpoints para acompanhar o progresso do processamento.\n\nRegra de acesso: requer role ENVIO ou CONSULTA.\n\nAntes de usar esses requests, execute o upload valido ou preencha manualmente a variavel `processingId`.",
+      "item": [
+        {
+          "name": "Status com token CONSULTA",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenConsulta}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/uploads/{{processingId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "uploads",
+                "{{processingId}}",
+                "status"
+              ]
+            },
+            "description": "Consulta o status usando token com role CONSULTA.\n\nResposta esperada:\n- HTTP 200\n- body com `{ \"id\": \"...\", \"status\": \"EM_PROCESSAMENTO|FINALIZADO_COM_ERROS|FINALIZADO_COM_SUCESSO\" }`"
+          },
+          "response": []
+        },
+        {
+          "name": "Status com token ENVIO",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenEnvio}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/uploads/{{processingId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "uploads",
+                "{{processingId}}",
+                "status"
+              ]
+            },
+            "description": "Mesmo endpoint de status, agora usando token com role ENVIO."
+          },
+          "response": []
+        },
+        {
+          "name": "Status com ID invalido",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenConsulta}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/uploads/id-invalido/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "uploads",
+                "id-invalido",
+                "status"
+              ]
+            },
+            "description": "Cenario de erro para validar parametro mal formatado.\n\nResposta esperada:\n- HTTP 400\n- body com `{ \"erro\": \"Parametro invalido\" }`"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. Consulta de resultado",
+      "description": "Endpoints para ler o resultado final do processamento.\n\nRegra de acesso: requer role CONSULTA.\n\nSe o processamento ainda estiver em andamento, a API responde com `409 Conflict` e status `EM_PROCESSAMENTO`.",
+      "item": [
+        {
+          "name": "Resultado com token CONSULTA",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenConsulta}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/uploads/{{processingId}}/resultado",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "uploads",
+                "{{processingId}}",
+                "resultado"
+              ]
+            },
+            "description": "Consulta o resultado do processamento.\n\nResposta esperada quando finalizado:\n- HTTP 200\n- body com `status` e `resumo`\n\nResposta esperada quando ainda estiver processando:\n- HTTP 409\n- body com `{ \"id\": null, \"status\": \"EM_PROCESSAMENTO\" }`"
+          },
+          "response": []
+        },
+        {
+          "name": "Resultado com token sem permissao",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenEnvio}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/uploads/{{processingId}}/resultado",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "uploads",
+                "{{processingId}}",
+                "resultado"
+              ]
+            },
+            "description": "Cenario de erro para validar controle de acesso.\n\nResposta esperada:\n- HTTP 403\n- body com `{ \"erro\": \"Acesso negado\" }`"
+          },
+          "response": []
+        },
+        {
+          "name": "Resultado com ID inexistente",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenConsulta}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/uploads/2f689816-e8dc-4ea2-8d98-f1e8fdd6db33/resultado",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "uploads",
+                "2f689816-e8dc-4ea2-8d98-f1e8fdd6db33",
+                "resultado"
+              ]
+            },
+            "description": "Cenario de erro para validar busca por upload inexistente.\n\nResposta esperada:\n- HTTP 404\n- body com `{ \"erro\": \"Arquivo nao encontrado\" }`"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

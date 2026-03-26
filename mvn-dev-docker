@@ -1,12 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+APP_PORT="${APP_PORT:-8082}"
+SERVER_PORT="${SERVER_PORT:-8082}"
+
 docker run --rm \
   --add-host=host.docker.internal:host-gateway \
   -e DB_URL \
   -e DB_USERNAME \
   -e DB_PASSWORD \
   -e APP_TEMP_DIR \
+  -e SERVER_PORT="${SERVER_PORT}" \
+  -p "${APP_PORT}:${SERVER_PORT}" \
   -v /saas/test-java:/workspace \
   -w /workspace \
   maven:3.9.9-eclipse-temurin-21 \

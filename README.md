@@ -33,6 +33,11 @@ Rodando a aplicacao:
 ./mvn-dev-docker spring-boot:run
 ```
 
+Esse comando publica a porta da API no host. Por padrao:
+
+- container: `8082`
+- host: `8082`
+
 Se estiver rodando o Postgres do projeto em outra porta, a aplicacao precisa apontar para o host:
 
 ```bash
@@ -40,6 +45,12 @@ DB_URL=jdbc:postgresql://host.docker.internal:5434/materimperium ./mvn-dev-docke
 ```
 
 Por padrao a API sobe na porta `8082`.
+
+Se quiser mudar a porta publicada no host:
+
+```bash
+APP_PORT=8083 ./mvn-dev-docker spring-boot:run
+```
 
 ## Producao / Demo
 
@@ -60,6 +71,21 @@ POSTGRES_PORT=5434 APP_PORT=8083 docker compose -f docker-compose.prod.yml up --
 - `token-envio` -> role `ENVIO`
 - `token-consulta` -> role `CONSULTA`
 - `token-full` -> roles `ENVIO` e `CONSULTA`
+
+## Postman
+
+Arquivos disponiveis:
+
+- collection: [postman/Test-RafyWP.postman_collection.json](/saas/test-java/postman/Test-RafyWP.postman_collection.json)
+- environment: [postman/Test-RafyWP-Local.postman_environment.json](/saas/test-java/postman/Test-RafyWP-Local.postman_environment.json)
+
+Como usar:
+
+1. Importe a collection e o environment no Postman.
+2. Selecione o environment `Test-RafyWP Local`.
+3. Ajuste `baseUrl` se a API nao estiver em `http://localhost:8082`.
+4. No request `Upload valido`, escolha um arquivo manualmente no campo `file`.
+5. Execute o upload. O `processingId` sera salvo automaticamente para uso nos requests seguintes.
 
 ## Endpoints
 
