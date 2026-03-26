@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: materimperium-postgres
+    environment:
+      POSTGRES_DB: materimperium
+      POSTGRES_USER: materimperium
+      POSTGRES_PASSWORD: materimperium
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:

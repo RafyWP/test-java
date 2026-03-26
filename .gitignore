@@ -1,0 +1,28 @@
+/target/
+/.idea/
+/.vscode/
+
+# IntelliJ / editors
+*.iml
+*.ipr
+*.iws
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Java / Maven
+*.class
+.mvn/timing.properties
+dependency-reduced-pom.xml
+
+# Local env and temp files
+*.tmp
+*.swp
+*.swo
+
+# Briefing file
+Teste Técnico - Backend MaterImperium.pdf

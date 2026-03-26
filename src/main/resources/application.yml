@@ -1,0 +1,27 @@
+spring:
+  application:
+    name: backend-test
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/materimperium}
+    username: ${DB_USERNAME:materimperium}
+    password: ${DB_PASSWORD:materimperium}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+  servlet:
+    multipart:
+      max-file-size: 1GB
+      max-request-size: 1GB
+
+server:
+  port: ${SERVER_PORT:8082}
+  error:
+    include-message: always
+
+app:
+  storage:
+    temp-dir: ${APP_TEMP_DIR:/tmp/materimperium}
