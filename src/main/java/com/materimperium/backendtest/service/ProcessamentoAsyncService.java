@@ -4,6 +4,7 @@ import com.materimperium.backendtest.domain.ArquivoProcessamento;
 import com.materimperium.backendtest.domain.ResumoRegistro;
 import com.materimperium.backendtest.domain.StatusProcessamento;
 import com.materimperium.backendtest.exception.RecursoNaoEncontradoException;
+import com.materimperium.backendtest.logging.LoggingContextKeys;
 import com.materimperium.backendtest.repository.ArquivoProcessamentoRepository;
 import com.materimperium.backendtest.repository.ResumoRegistroRepository;
 import java.io.BufferedReader;
@@ -15,11 +16,16 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Service
 public class ProcessamentoAsyncService {
+
+    private static final Logger log = LoggerFactory.getLogger(ProcessamentoAsyncService.class);
 
     private final ArquivoProcessamentoRepository arquivoProcessamentoRepository;
     private final ResumoRegistroRepository resumoRegistroRepository;
@@ -33,15 +39,22 @@ public class ProcessamentoAsyncService {
     }
 
     @Async("processamentoExecutor")
-    public void processarArquivo(UUID arquivoId) {
-        ArquivoProcessamento arquivo = arquivoProcessamentoRepository.findById(arquivoId)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Arquivo nao encontrado"));
-
-        Path caminho = Path.of(arquivo.getCaminhoTemporario());
-        arquivo.setIniciadoEm(Instant.now());
-        arquivoProcessamentoRepository.save(arquivo);
-
+    public void processarArquivo(UUID arquivoId, String correlationId) {
+        if (correlationId != null && !correlationId.isBlank()) {
+            MDC.put(LoggingContextKeys.CORRELATION_ID, correlationId);
+        }
+        MDC.put(LoggingContextKeys.UPLOAD_ID, arquivoId.toString());
+        ArquivoProcessamento arquivo = null;
+        Path caminho = null;
         try {
+            arquivo = arquivoProcessamentoRepository.findById(arquivoId)
+                    .orElseThrow(() -> new RecursoNaoEncontradoException("Arquivo nao encontrado"));
+
+            caminho = Path.of(arquivo.getCaminhoTemporario());
+            arquivo.setIniciadoEm(Instant.now());
+            arquivoProcessamentoRepository.save(arquivo);
+            log.info("Processamento iniciado arquivo={} caminhoTemporario={}", arquivo.getNomeArquivo(), caminho);
+
             Map<String, Long> contagem = contarRegistros(caminho);
             for (Map.Entry<String, Long> entry : contagem.entrySet()) {
                 ResumoRegistro resumo = new ResumoRegistro();
@@ -54,18 +67,27 @@ public class ProcessamentoAsyncService {
             arquivo.setStatus(StatusProcessamento.FINALIZADO_COM_SUCESSO);
             arquivo.setFinalizadoEm(Instant.now());
             arquivo.setMensagemErro(null);
+            log.info("Processamento finalizado com sucesso registrosDistintos={}", contagem.size());
         } catch (Exception ex) {
-            arquivo.setStatus(StatusProcessamento.FINALIZADO_COM_ERROS);
-            arquivo.setFinalizadoEm(Instant.now());
-            arquivo.setMensagemErro(ex.getMessage());
-        } finally {
-            try {
-                Files.deleteIfExists(caminho);
-            } catch (IOException ignored) {
+            if (arquivo != null) {
+                arquivo.setStatus(StatusProcessamento.FINALIZADO_COM_ERROS);
+                arquivo.setFinalizadoEm(Instant.now());
+                arquivo.setMensagemErro(ex.getMessage());
             }
-
-            arquivo.setCaminhoTemporario("");
-            arquivoProcessamentoRepository.save(arquivo);
+            log.error("Processamento finalizado com erro", ex);
+        } finally {
+            if (caminho != null) {
+                try {
+                    Files.deleteIfExists(caminho);
+                } catch (IOException ignored) {
+                }
+            }
+            if (arquivo != null) {
+                arquivo.setCaminhoTemporario("");
+                arquivoProcessamentoRepository.save(arquivo);
+            }
+            MDC.remove(LoggingContextKeys.UPLOAD_ID);
+            MDC.remove(LoggingContextKeys.CORRELATION_ID);
         }
     }
 

@@ -22,6 +22,10 @@ server:
   error:
     include-message: always
 
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %-5level [%thread] [%X{correlationId:-}] [%X{uploadId:-}] %logger{36} : %msg%n"
+
 app:
   storage:
     temp-dir: ${APP_TEMP_DIR:/tmp/materimperium}
