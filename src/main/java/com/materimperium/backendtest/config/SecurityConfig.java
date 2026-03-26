@@ -24,6 +24,7 @@ public class SecurityConfig {
                 .formLogin(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/api/uploads/*/resultado").hasRole("CONSULTA")
                         .requestMatchers("/api/uploads/*/status").hasAnyRole("ENVIO", "CONSULTA")
                         .requestMatchers("/api/uploads").hasRole("ENVIO")

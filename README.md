@@ -29,6 +29,8 @@ docker compose -f docker-compose.dev.yml up -d
 Depois disso:
 
 - API: `http://localhost:8082`
+- Swagger UI: `http://localhost:8082/swagger-ui/index.html`
+- OpenAPI JSON: `http://localhost:8082/v3/api-docs`
 - banco: `localhost:5432`
 - arquivo de exemplo para upload manual: [`exemplo-registros.txt`](exemplo-registros.txt)
 
@@ -160,6 +162,15 @@ Como usar:
 3. Ajuste `baseUrl` se a API nao estiver em `http://localhost:8082`.
 4. No request `Upload valido`, escolha um arquivo manualmente no campo `file`.
 5. Execute o upload. O `processingId` sera salvo automaticamente para uso nos requests seguintes.
+
+## Swagger / OpenAPI
+
+Documentacao interativa:
+
+- Swagger UI: `http://localhost:8082/swagger-ui/index.html`
+- OpenAPI JSON: `http://localhost:8082/v3/api-docs`
+
+Os endpoints de documentacao ficam liberados sem autenticacao para facilitar a avaliacao manual da API.
 
 ## Endpoints
 
