@@ -41,7 +41,7 @@ class ProcessamentoAsyncServiceTest extends IntegrationTestSupport {
         arquivo = arquivoProcessamentoRepository.save(arquivo);
         var arquivoId = arquivo.getId();
 
-        processamentoAsyncService.processarArquivo(arquivoId);
+        processamentoAsyncService.processarArquivo(arquivoId, "test-correlation-id");
 
         ArquivoProcessamento atualizado = aguardar(
                 () -> arquivoProcessamentoRepository.findById(arquivoId).orElseThrow(),

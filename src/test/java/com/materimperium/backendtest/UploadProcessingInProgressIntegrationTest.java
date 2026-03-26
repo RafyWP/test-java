@@ -41,7 +41,7 @@ class UploadProcessingInProgressIntegrationTest extends IntegrationTestSupport {
 
     @BeforeEach
     void setup() {
-        doNothing().when(processamentoAsyncService).processarArquivo(any(UUID.class));
+        doNothing().when(processamentoAsyncService).processarArquivo(any(UUID.class), any());
     }
 
     @Test

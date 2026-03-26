@@ -121,6 +121,10 @@ Variaveis mais relevantes:
 - `APP_PORT`: porta publicada no host ao usar `mvn-dev-docker` ou `docker-compose.prod.yml`. Default: `8082`
 - `APP_TEMP_DIR`: diretorio temporario para armazenar uploads antes do processamento assincrono. Default: `/tmp/materimperium`
 
+Header opcional:
+
+- `X-Correlation-Id`: identificador de rastreamento por request. Se nao for enviado, a API gera um valor automaticamente e devolve no response header.
+
 ## Tokens disponiveis
 
 - `token-envio` -> role `ENVIO`
@@ -345,6 +349,7 @@ Principais entidades:
 - O arquivo e copiado para diretorio temporario e processado em background.
 - A leitura e feita em streaming, linha a linha, evitando carregar arquivos grandes em memoria.
 - O historico de cada upload e mantido em banco relacional.
+- A API propaga `correlationId` por request e registra `uploadId` nos logs de processamento e consulta.
 
 ## Evolucao Para Producao
 

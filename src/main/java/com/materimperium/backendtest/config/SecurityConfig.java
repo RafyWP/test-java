@@ -1,5 +1,6 @@
 package com.materimperium.backendtest.config;
 
+import com.materimperium.backendtest.logging.CorrelationIdFilter;
 import com.materimperium.backendtest.security.BearerTokenFilter;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
@@ -16,7 +17,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, BearerTokenFilter bearerTokenFilter)
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http,
+            CorrelationIdFilter correlationIdFilter,
+            BearerTokenFilter bearerTokenFilter
+    )
             throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
@@ -29,7 +34,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/uploads/*/status").hasAnyRole("ENVIO", "CONSULTA")
                         .requestMatchers("/api/uploads").hasRole("ENVIO")
                         .anyRequest().authenticated())
-                .addFilterBefore(bearerTokenFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(correlationIdFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(bearerTokenFilter, CorrelationIdFilter.class)
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, authException) -> {
                             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);

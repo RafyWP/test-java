@@ -7,14 +7,20 @@ import com.materimperium.backendtest.dto.ResumoItemResponse;
 import com.materimperium.backendtest.dto.StatusResponse;
 import com.materimperium.backendtest.exception.ProcessamentoEmAndamentoException;
 import com.materimperium.backendtest.exception.RecursoNaoEncontradoException;
+import com.materimperium.backendtest.logging.LoggingContextKeys;
 import com.materimperium.backendtest.repository.ArquivoProcessamentoRepository;
 import com.materimperium.backendtest.repository.ResumoRegistroRepository;
 import java.util.List;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
 
 @Service
 public class ConsultaService {
+
+    private static final Logger log = LoggerFactory.getLogger(ConsultaService.class);
 
     private final ArquivoProcessamentoRepository arquivoProcessamentoRepository;
     private final ResumoRegistroRepository resumoRegistroRepository;
@@ -28,22 +34,35 @@ public class ConsultaService {
     }
 
     public StatusResponse consultarStatus(UUID id) {
-        ArquivoProcessamento arquivo = buscarArquivo(id);
-        return new StatusResponse(arquivo.getId(), arquivo.getStatus());
+        MDC.put(LoggingContextKeys.UPLOAD_ID, id.toString());
+        try {
+            ArquivoProcessamento arquivo = buscarArquivo(id);
+            log.info("Consulta de status status={}", arquivo.getStatus());
+            return new StatusResponse(arquivo.getId(), arquivo.getStatus());
+        } finally {
+            MDC.remove(LoggingContextKeys.UPLOAD_ID);
+        }
     }
 
     public ResultadoResponse consultarResultado(UUID id) {
-        ArquivoProcessamento arquivo = buscarArquivo(id);
-        if (arquivo.getStatus() == StatusProcessamento.EM_PROCESSAMENTO) {
-            throw new ProcessamentoEmAndamentoException("Arquivo ainda em processamento");
+        MDC.put(LoggingContextKeys.UPLOAD_ID, id.toString());
+        try {
+            ArquivoProcessamento arquivo = buscarArquivo(id);
+            if (arquivo.getStatus() == StatusProcessamento.EM_PROCESSAMENTO) {
+                log.info("Consulta de resultado com processamento em andamento");
+                throw new ProcessamentoEmAndamentoException("Arquivo ainda em processamento");
+            }
+
+            List<ResumoItemResponse> resumo = resumoRegistroRepository.findAllByArquivoProcessamentoIdOrderByRegistroAsc(id)
+                    .stream()
+                    .map(item -> new ResumoItemResponse(item.getRegistro(), item.getTotal()))
+                    .toList();
+
+            log.info("Consulta de resultado status={} totalRegistros={}", arquivo.getStatus(), resumo.size());
+            return new ResultadoResponse(arquivo.getStatus(), resumo);
+        } finally {
+            MDC.remove(LoggingContextKeys.UPLOAD_ID);
         }
-
-        List<ResumoItemResponse> resumo = resumoRegistroRepository.findAllByArquivoProcessamentoIdOrderByRegistroAsc(id)
-                .stream()
-                .map(item -> new ResumoItemResponse(item.getRegistro(), item.getTotal()))
-                .toList();
-
-        return new ResultadoResponse(arquivo.getStatus(), resumo);
     }
 
     private ArquivoProcessamento buscarArquivo(UUID id) {
